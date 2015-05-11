@@ -1,0 +1,24 @@
+<head>
+    <link href="multiple-select.css" rel="stylesheet"/>
+
+     
+</head>
+<body>
+    <select id="ms" multiple="multiple">
+        <option value="1">January</option>
+       
+        <option value="12">December</option>
+    </select>
+   <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+          <script src="jquery.multiple.select.js"></script>
+     <script>
+     $(function() {
+         $('#ms').change(function() {
+             console.log($(this).val());
+         }).multipleSelect({
+             width: '100%'
+         });
+     });
+    </script>
+    
+</body>

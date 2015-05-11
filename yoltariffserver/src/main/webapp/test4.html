@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>click demo</title>
+  <style>
+  p {
+    color: red;
+    margin: 5px;
+    cursor: pointer;
+  }
+  p:hover {
+    background: yellow;
+  }
+  
+  
+  #leftcolumn { width: 800px; border: 1px solid red; float: left}
+#rightcolumn { width: 500px; border: 1px solid red; float: right}
+
+
+/*	start styles for the ContextMenu	*/
+.context_menu{
+	background-color:white;
+	border:1px solid gray;
+}
+.context_menu_item{
+	padding:3px 6px;
+}
+.context_menu_item:hover{
+	background-color:#CCCCCC;
+}
+.context_menu_separator{
+	background-color:gray;
+	height:1px;
+	margin:0;
+	padding:0;
+}
+/*	end styles for the ContextMenu	*/
+  </style>
+
+<link href="multiple-select.css" rel="stylesheet"/>
+<!-- <link href="http://cdn.datatables.net/1.10.3/css/jquery.dataTables.css" rel="stylesheet"/> -->
+  <link rel="stylesheet" type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css">
+
+
+
+<!--   <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script> -->
+  
+  <script type="text/javascript" src="http://maps.google.com/maps/api/js?libraries=geometry&sensor=true"></script>
+  
+<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+<script type="text/javascript" src="http://openlayers.org/api/OpenLayers.js"></script>
+<!-- <script type="text/javascript" src="http://cdn.datatables.net/1.10.3/js/jquery.dataTables.min.js"></script> -->
+<script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>
+
+<script src="jquery.multiple.select.js"></script>
+<script src="proj4js-combined.js"></script>
+<script src="ContextMenu.js"></script>
+
+<script type="text/javascript">
+Proj4js.defs["EPSG:2322"] = "+proj=tmerc +lat_0=0 +lon_0=36 +k=1 +x_0=500000 +y_0=0 +ellps=intl +units=m +no_defs";
+
+
+</script>
+<script>
+
+    </script>
+
+
+<script type="text/javascript">
+   
+var table;
+
+   var lines = [];
+   
+   var markers = [];
+   
+   var startMarker;
+   
+   var finishMarker;
+   
+   var startCircle;
+   
+   var finishCircle;
+   
+   
+   var populationOptions = {
+		      strokeColor: '#FF0000',
+		      strokeOpacity: 0.8,
+		      strokeWeight: 2,
+		      fillColor: '#FF0000',
+		      fillOpacity: 0.35,
+		      //map: map,
+		      //center: latLng,
+		      radius: 100
+		    };
+   
+   var map;
+   
+   function uncheckAllItems(){
+	   $('.case').each(function() { //loop through each checkbox
+          	this.checked = false;  //select all checkboxes with class "checkbox1"               
+       });
+   }
+   
+   function drawAllMap(){
+	   for(var  i=0;i<lines.length;i++){
+	    	 drawMap(lines[i]);
+	    	
+	     }
+   }
+   
+   function removeAllMap(){
+	   for(var  i=0;i<lines.length;i++){
+	    	 removeMap(lines[i]);
+	    	
+	     }
+   }
+   
+   function cbChanged(checkboxElem) {
+	   if (checkboxElem.checked) {
+		 //lines.lengt;
+	    // alert(checkboxElem.checked +" "+ checkboxElem.value);
+	     for(var  i=0;i<lines.length;i++){
+	    	 if(lines[i].id==checkboxElem.value){
+	    		 drawMap(lines[i]);
+	    		 break;
+	    	 }
+	     }
+	   } else {
+		   for(var  i=0;i<lines.length;i++){
+		    	 if(lines[i].id==checkboxElem.value){
+		    		 removeMap(lines[i]);
+		    		 break;
+		    	 }
+		     }
+	   }
+	 }
+   
+   function initialize() {
+
+	   
+	   var myLatlng = new google.maps.LatLng(38.725142,35.478427);
+	   var mapOptions = {
+	     zoom: 14,
+	     center: myLatlng
+	   }
+	   map = new google.maps.Map(document.getElementById('dvMap'), mapOptions);
+	   //google.maps.event.addListener(map, 'click', addLatLng);
+	   getData();
+	   
+	   var contextMenuOptions={};
+	   contextMenuOptions.classNames={menu:'context_menu', menuSeparator:'context_menu_separator'};
+	   
+//		create an array of ContextMenuItem objects
+		var menuItems=[];
+		menuItems.push({className:'context_menu_item', eventName:'make_start', label:'Baslangic Noktasi yap'});
+		menuItems.push({className:'context_menu_item', eventName:'make_destination', label:'Varış Noktasi yap'});
+		//	a menuItem with no properties will be rendered as a separator
+		menuItems.push({});
+		menuItems.push({className:'context_menu_item', eventName:'center_map_click', label:'Center map here'});
+		contextMenuOptions.menuItems=menuItems;
+		
+		var contextMenu=new ContextMenu(map, contextMenuOptions);
+		
+		google.maps.event.addListener(map, 'rightclick', function(mouseEvent){
+			contextMenu.show(mouseEvent.latLng);
+		});
+		
+//		listen for the ContextMenu 'menu_item_selected' event
+		google.maps.event.addListener(contextMenu, 'menu_item_selected', function(latLng, eventName){
+			//	latLng is the position of the ContextMenu
+			//	eventName is the eventName defined for the clicked ContextMenuItem in the ContextMenuOptions
+			switch(eventName){
+				case 'make_start':
+					setStartPoint(latLng)
+					break;
+				case 'make_destination':
+					setEndPoint(latLng)
+					break;
+				case 'center_map_click':
+					map.panTo(latLng);
+					break;
+			}
+		});
+		
+		startCircle = new google.maps.Circle(populationOptions);
+	   
+	   startMarker = new google.maps.Marker({
+	       //position: myLatlng,
+	       //map: map,
+	       title: 'Start Point!'
+	   });
+	   
+	finishCircle = new google.maps.Circle(populationOptions);
+	   
+	   finishMarker = new google.maps.Marker({
+	       //position: myLatlng,
+	       //map: map,
+	       title: 'End Point!'
+	   });
+	 }
+   
+   function removeMap(line){
+	   for (var i = 0; i < line.markers.length; i++) {
+		    line.markers[i].setMap(null);            
+		 }
+	      line.poly.setMap(null);
+	      }
+
+   function drawMap(line) {
+        
+     for (var i = 0; i < line.markers.length; i++) {
+	    line.markers[i].setMap(map);            
+	 }
+      line.poly.setMap(map);
+      }
+   
+   
+   function setEndPoint(latLng) {
+
+	   removeAllMap();
+	   uncheckAllItems();
+	   finishMarker.setMap(null);
+	   finishCircle.setMap(null);
+	   
+	   
+	   var lat = latLng.k;
+	   var lng = latLng.B;
+	   var url = "http://localhost:8080/yoltariffserver/rest/hello/GetLines/findClosestNode/"+lat+"/"+lng;
+	   $.getJSON( url, function( data ) {
+		   //alert("node sayisi="+data); 
+		   
+		   if(data.length==0){
+			   alert("Durak bulunamadı");
+			   return;
+		   }
+		   
+		  finishMarker.setPosition(latLng);
+		  finishMarker.setMap(map);
+		  
+		   
+		   
+		  finishCircle.setMap(map); 
+		  finishCircle.setCenter(latLng);
+		   
+		   $.each(data , function(index, value){
+			  //alert(value);
+			  var lineId = value.split("-")[0];
+			  $('.case').each(function() { //loop through each checkbox
+	                if(this.value==lineId)
+	                	this.checked = true;  //select all checkboxes with class "checkbox1"               
+	            });
+			  
+			  
+			  for(var  i=0;i<lines.length;i++){
+			    	 if(lines[i].id.indexOf(lineId)>-1){
+			    		 //alert(lines[i].id+" "+lineId);
+			    		 drawMap(lines[i]);
+			    		 //break;
+			    	 }
+			     }
+		   });
+	   });
+	 }
+   
+   function setStartPoint(latLng) {
+
+	   removeAllMap();
+	   uncheckAllItems();
+	   startMarker.setMap(null);
+	   startCircle.setMap(null);
+	   
+	   
+	   var lat = latLng.k;
+	   var lng = latLng.B;
+	   var url = "http://localhost:8080/yoltariffserver/rest/hello/GetLines/findClosestNode/"+lat+"/"+lng;
+	   $.getJSON( url, function( data ) {
+		   //alert("node sayisi="+data); 
+		   
+		   if(data.length==0){
+			   alert("Durak bulunamadı");
+			   return;
+		   }
+		   
+		  startMarker.setPosition(latLng);
+		  startMarker.setMap(map);
+		  startMarker.setTitle('Baslangic Noktasi');
+		   
+		   
+		  startCircle.setMap(map); 
+		  startCircle.setCenter(latLng);
+		   
+		   $.each(data , function(index, value){
+			  //alert(value);
+			  var lineId = value.split("-")[0];
+			  $('.case').each(function() { //loop through each checkbox
+	                if(this.value==lineId)
+	                	this.checked = true;  //select all checkboxes with class "checkbox1"               
+	            });
+			  
+			  
+			  for(var  i=0;i<lines.length;i++){
+			    	 if(lines[i].id.indexOf(lineId)>-1){
+			    		 //alert(lines[i].id+" "+lineId);
+			    		 drawMap(lines[i]);
+			    		 //break;
+			    	 }
+			     }
+		   });
+	   });
+	 }
+    
+     google.maps.event.addDomListener(window, 'load', initialize);
+     
+     $('#table').DataTable();
+   
+     
+</script>
+
+</head>
+<body>
+
+<div id"container">
+<div id="leftcolumn"><div id="dvMap" style="width: 800px; height: 700px"></div></div>
+<div id="rightcolumn">
+<!-- <div id="selects"> -->
+<!-- <INPUT TYPE=CHECKBOX NAME="mushrooms">mushrooms<BR> -->
+<!-- <INPUT TYPE=CHECKBOX NAME="greenpeppers">green peppers<BR> -->
+<!-- <INPUT TYPE=CHECKBOX NAME="onions">onions<BR> -->
+<!-- <INPUT TYPE=CHECKBOX NAME="tomatoes">tomatoes<BR> -->
+<!-- <INPUT TYPE=CHECKBOX NAME="olives">olives -->
+<!-- </div> -->
+<p>Yukle</p>
+<div id="tables">
+<table id="table" border="1">
+<thead>
+<tr>
+    
+    	<th><input type="checkbox" id="selectall"/></th>
+    	<th>Hat İsmi</th>
+	
+</tr>
+</thead>
+</table>
+
+</div>
+
+
+</div>
+</div>
+
+
+
+
+<script>
+$(function(){
+$('#selectall').click(function(event) {  //on click
+    if(this.checked) { // check select status
+        $(":checkbox").attr("checked", true);
+    drawAllMap();
+    }else{
+         $(":checkbox").attr("checked", false);
+       removeAllMap();
+    }
+});
+})
+</script>
+
+
+<script>
+
+$(function(){
+    $("#table").dataTable();
+    table = $('#example').DataTable();
+  })
+</script>
+<script>
+
+// $('#table').dataTable( {
+// 	"bJQueryUI": true,
+// 	"paging":   true,
+//     "sPaginationType":"full_numbers",
+//     "iDisplayLength": 10,
+//     "order": [[ 1, "desc" ]]
+// } );
+
+$(function() {
+    $('#ms').change(function() {
+        console.log($(this).val());
+    }).multipleSelect({
+        width: '100%',
+        isOpen: true,
+        keepOpen: true
+    });
+});
+
+$( "p" ).click(function(){
+	
+	//alert("test");
+	getData();
+});
+
+function getData() {
+  //alert("deneme");
+  //drawMap();
+  
+  $.getJSON( "http://localhost:8080/yoltariffserver/rest/hello/GetLines", function( data ) {
+  var items = [];
+ //alert("deneme");
+  $('#table').empty(); 
+  
+ $('#table').append("<thead><tr>	<th><input type=\"checkbox\" id=\"selectall\"/></th>	<th>Hat ismi</th>	</tr></thead>");
+ $('#table').append("<tbody>");
+  
+ $.each(data.lineList , function(index, value){
+     //alert(value);
+    
+     var line = new Object();
+     line.markers = [];
+     line.name=value.name;
+     line.poly= new Object();
+     
+     var pinColor = (0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6);
+     var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
+        new google.maps.Size(21, 34),
+        new google.maps.Point(0,0),
+        new google.maps.Point(10, 34));
+     
+     var name = id = value.name;
+     var id = name.split("-")[0];
+     line.id=id;
+
+     //$('#selects').append($("<option></option>").attr("value","1").text(value.name));
+   
+   $('#table').append("<tr><td align=\"center\"><input type=\"checkbox\" class=\"case\" name=\"case\" value=\"" +id+ "\" onClick=\"cbChanged(this);\"/></td><td>"+value.name+"</td></tr>");
+//     $('#table').append("<td align=\"center\"><input type=\"checkbox\" class=\"case\" name=\"case\" value=\"1\"/></td>");
+//     $('#table').append("<td>"+value.name+"</td>");
+//     $('#table').append("</tr>");
+    
+//     $('#table').append("<tr>");
+//     $('#table').append("<td align=\"center\"><input type=\"checkbox\" class=\"case\" name=\"case\" value=\"1\"/></td>");
+//     $('#table').append("<td>"+value.name+"</td>");
+//     $('#table').append("</tr>");
+  
+// table.row.add( [
+//             '.1',
+//             value.name
+            
+//         ] ).draw();   
+
+ var path = new google.maps.MVCArray();
+ var poly = new google.maps.Polyline({ strokeColor: '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6) });
+ poly.setPath(path);  
+ line.poly= poly;
+
+ $.each(value.sortedStationList , function(index, value2){
+         var stationName = value2.name;
+         var wkt = value2.wkt;
+         wkt=wkt.replace("POINT( ","");
+         wkt=wkt.replace(" )","");
+         var coordinates = wkt.split(" ");
+         var lat = coordinates[0];
+         var lng = coordinates[1];
+         //alert(wkt);
+         
+         var pnt = new OpenLayers.LonLat(lng,lat);
+     	 pnt=pnt.transform(new OpenLayers.Projection('EPSG:2322'), new OpenLayers.Projection('EPSG:4326'));
+     	 
+     	 var newLng = pnt.lat-0.00012;
+     	 var newLat = pnt.lon-0.00023;
+     	 
+     	 var myLatlng = new google.maps.LatLng(newLng,newLat);
+     	path.push(new google.maps.LatLng(newLng, newLat));
+     	 
+     	var marker = new google.maps.Marker({
+     	      position: myLatlng,
+     	      //map: map,
+     	     icon: pinImage,
+     	      title: stationName+" " +value.name
+     	  });
+     	line.markers.push(marker);
+    });
+     //line.markers = markers;
+     lines.push(line);
+     //drawMap(line);
+     markers=[];
+});
+ $('#table').append("</tbody>");
+ $("#table").dataTable();
+ $(function(){
+	 $('#selectall').click(function(event) {  //on click
+	     if(this.checked) { // check select status
+	    	 $('.case').each(function() { //loop through each checkbox
+	                this.checked = true;  //select all checkboxes with class "checkbox1"               
+	            });
+	     drawAllMap();
+	     }else{
+	    	 $('.case').each(function() { //loop through each checkbox
+	                this.checked = false;  //select all checkboxes with class "checkbox1"               
+	            });
+	    	 removeAllMap();
+	     }
+	 });
+	 })
+});
+  
+  $('#checkbox').click(function() {
+	    var $this = $(this);
+	    // $this will contain a reference to the checkbox   
+	    if ($this.is(':checked')) {
+	        alert("cehcked");
+	    } else {
+	    	alert("uncehcked");
+	    }
+	});
+  
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+START p=node(11368), s=node(11365)
+MATCH path =shortestPath(p-[rels:next*]->(s))
+return extract(x IN nodes(path) | ID(x)), 
+extract(x IN nodes(path) | x.wkt),length(path)
+,
+reduce(duration=0, r in rels | duration+r.duration) AS totalDuration
+
+START p=node(11368), s=node(11365)
+MATCH path =shortestPath(p-[rels:next*]->(s))
+return extract(x IN nodes(path) | ID(x))
+
+START p=node(11368), s=node(11365)
+MATCH path =shortestPath(p-[rels:next*]->(s))
+return nodes(path)
+
+START p=node(11368), s=node(11365)
+MATCH p-[rels:next*]->(s)
+RETURN  ID(p) AS shortestPath, 
+        reduce(duration=0, r in rels| duration+r.duration) AS totalWeight
+ORDER BY totalWeight ASC limit 1

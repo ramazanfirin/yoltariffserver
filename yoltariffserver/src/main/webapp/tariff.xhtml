@@ -1,0 +1,202 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	
+	>
+<h:head>
+	<title>Welcome to OTV_JSF_Spring_Hibernate_Project</title>
+	<style type="text/css">
+.ui-widget,.ui-widget .ui-widget {
+	font-size: 12px !important;
+}
+
+.ui-widget .ui-widget {
+font-size: 0.5em;
+}
+.ui-growl {
+right: 50%;
+
+}
+.gm-style-iw {
+width: 300px; 
+max-height: 200px;
+min-height: 100px;
+}
+
+  #leftcolumn { width: 800px; border: 1px solid red; float: left}
+#rightcolumn { width: 500px; border: 1px solid red; float: right}
+</style>
+	<script src="http://maps.google.com/maps/api/js?sensor=false&amp;v=3.4"
+		type="text/javascript"></script>
+	<script src="http://openlayers.org/api/OpenLayers.js"></script>
+	<script src="js/proj4js-combined.js"></script>	
+		
+		<script>
+		var infowindow = new google.maps.InfoWindow({
+	        content: "",
+	        maxWidth: 500
+	    });
+		
+		function updateCoordinateForm(startLat,startLng,endLat,endLng){
+			document.getElementById('queryForm:startLag').Value = startLat;
+			document.getElementById('queryForm:startLng').Value = startLng;
+			document.getElementById('queryForm:endLat').Value = endLat;
+			document.getElementById('queryForm:endLng').Value = endLng;
+		}
+		
+		
+		function openInfoWindow(info,lat,lng){
+			//alert("test");
+			var gmap = PF('map').getMap();
+			var myLatlng = new google.maps.LatLng(lat,lng);
+			infowindow.setContent(info);
+	    	infowindow.setPosition(myLatlng);
+	    	infowindow.open(gmap);
+			
+		}
+		
+		
+		
+		
+		</script>
+		
+</h:head>
+<h:body>
+
+<div id="container">
+<div id="leftcolumn">
+<h:form id="formMap">
+<p:gmap id="map" center="38.72956137445706, 35.47995459062804" zoom="14" fitBounds="true" 
+					type="ROADMAP" style="width:850px;height:550px;margin-left:5px"
+					model="#{tariff.emptyModel}"
+					
+					
+					widgetVar="map">
+				
+				
+					
+				<p:ajax event="markerDrag" listener="#{tariff.onMarkerDrag}" update=":queryForm:startLag,:queryForm:startLng,:queryForm:endLat,:queryForm:endLng" />
+				<p:ajax event="overlaySelect" listener="#{tariff.onMarkerSelect}"  />
+				
+				
+				</p:gmap>
+				
+</h:form>
+
+
+
+
+
+
+</div>
+<div id="rightcolumn">
+<h:form id="form"> 
+<p:commandButton value="Get Lİnes" action="#{tariff.getLines}" update="checkboxDT"></p:commandButton>
+<p:commandButton value="Temizle" action="#{tariff.removeLines}" update=":formMap:map"></p:commandButton>
+<p:dataTable id="checkboxDT" var="car" value="#{tariff.visualLines}" rows="10" paginator="true" paginatorPosition="bottom" selection="#{tariff.selectedLines}" rowKey="#{car.name}" style="margin-bottom:0">
+        
+        <p:column headerText="İsim" width="90%">
+            <h:outputText value="#{car.name}" />
+        </p:column>
+        
+        <p:column headerText="Çiz">
+           <p:commandButton value="ciz" action="#{tariff.drawLine}" update=":formMap:map">
+                	<f:setPropertyActionListener value="#{car}" target="#{tariff.selectedVisualLine}" />
+           </p:commandButton>
+        </p:column>
+      
+    </p:dataTable>
+ 
+
+</h:form>
+
+<h:form id="queryForm">
+
+<p:messages id="messages" ></p:messages>
+<h:panelGrid columns="3">
+
+<h:outputLabel value="Başlangıç"></h:outputLabel>
+<h:inputText id="startLag" value="#{tariff.startLat}" required="true"></h:inputText>
+<h:inputText id="startLng" value="#{tariff.startLng}" required="true"></h:inputText>
+
+<h:outputLabel value="Bitiş"></h:outputLabel>
+<h:inputText id="endLat" value="#{tariff.endLat}" required="true"></h:inputText>
+<h:inputText id="endLng" value="#{tariff.endLng}" required="true"></h:inputText>
+
+</h:panelGrid>		
+<p:commandButton value="İşaretçileri Göster" action="#{tariff.showTemplateMarkers}" update=":formMap:map,messages" immediate="true"></p:commandButton>
+<p:commandButton value="Hesapla" action="#{tariff.calculate}" update=":formMap:map,:routeTableForm:routeTable,messages"></p:commandButton>
+<p:ajaxStatus style="color:red">  
+    <f:facet name="start">  
+        <h:outputLabel value="Lütfen Bekleyiniz."></h:outputLabel> 
+    </f:facet>  
+      
+    <f:facet name="complete">  
+        <h:outputText value="" />  
+    </f:facet>  
+</p:ajaxStatus>  
+</h:form>
+
+<h:form id="demoForm">
+<h:panelGrid columns="3">
+<h:outputLabel value="Demo:"></h:outputLabel> 
+<p:selectOneMenu id="console" value="#{tariff.selectedDemo}">
+            <f:selectItem itemLabel="Aktarma - Birden fazla Yürüme Noktası" itemValue="1" />
+            <f:selectItem itemLabel="Aktarma - Aynı Durak" itemValue="2" />
+            <f:selectItem itemLabel="Yürüme" itemValue="3" />
+            
+        </p:selectOneMenu>
+
+<p:commandButton value="Göster" action="#{tariff.showSelectedDemo}" update=":formMap:map,:queryForm:endLat,:queryForm:endLng,:queryForm:startLng,:queryForm:startLag"></p:commandButton>		
+</h:panelGrid>
+</h:form>
+
+
+</div>
+</div>
+<h:form id="routeTableForm">
+<p:dataTable id="routeTable" var="car" value="#{tariff.decision.routes}" rows="15" paginator="true" paginatorPosition="bottom" style="margin-bottom:0">
+        
+        <p:column headerText="Baslangic Durak" >
+            <h:outputText value="#{car.startNodeName}" />
+        </p:column>
+        
+        <p:column headerText="Baslangic Hat">
+          	 <h:outputText value="#{car.startNodeLineName}" />
+        </p:column>
+        
+        <p:column headerText="Bitis Durak" >
+            <h:outputText value="#{car.endNodeName}" />
+        </p:column>
+        
+        <p:column headerText="Bitis hat" >
+            <h:outputText value="#{car.endNodeLineName}" />
+        </p:column>
+        
+        <p:column headerText="Süre" >
+            <h:outputText value="#{car.duration}" />
+        </p:column>
+        
+        <p:column headerText="Mesafe">
+            <h:outputText value="#{car.distance}" />
+        </p:column>
+        
+        <p:column headerText="Ulaşım tipi">
+            <h:outputText value="#{car.travelType}" />
+        </p:column>
+        
+        <f:facet name="footer">
+            <p:commandButton icon="ui-icon-search" value="View" action="#{tariff.drawLines}" update=":formMap:map"/>
+        </f:facet>
+    </p:dataTable>
+</h:form>
+
+
+
+
+
+
+
+</h:body>
+</html>

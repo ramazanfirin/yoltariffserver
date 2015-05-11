@@ -1,0 +1,103 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	
+	>
+<h:head>
+	<title>Welcome to OTV_JSF_Spring_Hibernate_Project</title>
+	<style type="text/css">
+.ui-widget,.ui-widget .ui-widget {
+	font-size: 12px !important;
+}
+
+.ui-widget .ui-widget {
+font-size: 0.5em;
+}
+.ui-growl {
+right: 50%;
+
+}
+.gm-style-iw {
+width: 300px; 
+max-height: 200px;
+min-height: 100px;
+}
+
+  #leftcolumn { width: 800px; border: 1px solid red; float: left}
+#rightcolumn { width: 500px; border: 1px solid red; float: right}
+</style>
+	
+</h:head>
+<h:body>
+
+
+
+
+
+
+
+
+
+
+<h:form id="routeTableForm">
+<p:commandButton value="Get Lİnes" action="#{otobusDataBean.showData}" update="routeTable"></p:commandButton>
+<p:dataTable id="routeTable" var="car" value="#{otobusDataBean.dataList}" rows="15" paginator="true" paginatorPosition="bottom" style="margin-bottom:0">
+        
+        <p:column headerText="VehicleName" >
+            <h:outputText value="#{car.vehicleName}" />
+        </p:column>
+        
+        <p:column headerText="Timestamp">
+          	 <h:outputText value="#{car.timestamp}" />
+        </p:column>
+        
+        <p:column headerText="Latitude" >
+            <h:outputText value="#{car.latitude}" />
+        </p:column>
+        
+        <p:column headerText="Longitude" >
+            <h:outputText value="#{car.longitude}" />
+        </p:column>
+        
+        <p:column headerText="Speed" >
+            <h:outputText value="#{car.speed}" />
+        </p:column>
+        
+        <p:column headerText="StopName">
+            <h:outputText value="#{car.stopName}" />
+        </p:column>
+        
+        <p:column headerText="Distance">
+            <h:outputText value="#{car.distance}" />
+        </p:column>
+        
+       
+    </p:dataTable>
+    
+    <h:panelGrid columns="2">
+	    <h:outputLabel value="Enlem(38.726687)"></h:outputLabel>
+	    <h:inputText id="lat" value="#{otobusDataBean.lat}"></h:inputText>
+	    <h:outputLabel value="Boylam(35.484796)"></h:outputLabel>
+	    <h:inputText id="lng" value="#{otobusDataBean.lng}"></h:inputText>
+	    
+	    <h:outputLabel value="Referans Enlem(38.726758)"></h:outputLabel>
+	    <h:inputText id="refLat" value="#{otobusDataBean.refLat}"></h:inputText>
+	    <h:outputLabel value="Referans Boylam(35.485000)"></h:outputLabel>
+	    <h:inputText id="refLng" value="#{otobusDataBean.refLng}"></h:inputText>
+	    
+	    
+	    <p:commandButton action="#{otobusDataBean.changeDurakCoordinates}" update="lat,lng,refLat,refLng" value="Durak Değiştir"></p:commandButton>
+	    <p:commandButton action="#{otobusDataBean.showDurakCoordinates}" update="lat,lng,refLng,refLat" value="Durak Goster"></p:commandButton>
+    </h:panelGrid>
+    
+</h:form> 
+
+
+
+
+
+
+
+</h:body>
+</html>
